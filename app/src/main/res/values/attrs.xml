@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="VCalendar">
+        <!-- 指标组 weight 高度 -->
+        <attr name="cal_itemHeight" format="dimension" />
+        <attr name="cal_textSizeWeekday" format="dimension" />
+        <attr name="cal_textColorWeekday" format="color" />
+        <attr name="cal_textColorHint" format="color" />
+        <attr name="android:textColor" />
+        <attr name="android:textSize" />
+    </declare-styleable>
+
+</resources>
