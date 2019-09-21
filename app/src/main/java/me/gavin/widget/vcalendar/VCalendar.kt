@@ -14,6 +14,7 @@ import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.animation.addListener
+import androidx.core.util.Consumer
 import me.gavin.R
 import java.util.*
 import kotlin.math.abs
@@ -130,6 +131,11 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
     }
 
     private fun drawDay(canvas: Canvas, day: Day, x: Float, y: Float) {
+        if (x > 0 && x < width && day.d == cal[Calendar.DAY_OF_MONTH] && day.m == cal[Calendar.MONTH]) {
+            paint.color = textColorHint
+            canvas.drawCircle(x, y + diffY, itemHeightF / 4, paint)
+            paint.color = textColor
+        }
         canvas.drawText(day.d.toString(), x, y, paint)
     }
 
@@ -196,6 +202,8 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
                         smoothScrollYBy(if (yv > 0) 0f else maxHeight - itemHeightF)
                     }
                     velocityTracker.recycle()
+                } else {
+                    selectDateByPoint(event.x, event.y)
                 }
 
                 scrollState = SCROLL_NONE
@@ -218,6 +226,7 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
                                 cal.add(Calendar.WEEK_OF_YEAR, if (scrollX > 0) 1 else -1)
                                 dateData = cal.dateData
                                 scrollX = 0
+                                dateSelectedListener?.accept(cal.clone() as Calendar)
                             } else {
                                 cal.add(Calendar.MONTH, if (scrollX > 0) 1 else -1)
                                 val rowDiff = dateData?.let {
@@ -230,6 +239,7 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
                                 }
                                 dateData = cal.dateData
                                 scrollX = 0
+                                dateSelectedListener?.accept(cal.clone() as Calendar)
                             }
                         }
                     })
@@ -256,6 +266,38 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
     private fun smoothScrollYBy(targetY: Float) {
         yAnimator.setFloatValues(foldHeight, targetY)
         yAnimator.start()
+    }
+
+    private fun selectDateByPoint(x: Float, y: Float) {
+        val hi = (x / width * 7f).toInt()
+        if (isWeekMode) {
+            dateData?.weeks?.get(1)?.days?.get(hi)?.let {
+                cal[Calendar.YEAR] = it.y
+                cal[Calendar.MONTH] = it.m
+                cal[Calendar.DAY_OF_MONTH] = it.d
+            }
+        } else {
+            val vi = (y / itemHeightF).toInt()
+            dateData?.months?.get(1)?.weeks?.get(vi)?.days?.get(hi)?.let {
+                cal[Calendar.YEAR] = it.y
+                cal[Calendar.MONTH] = it.m
+                cal[Calendar.DAY_OF_MONTH] = it.d
+            }
+        }
+        dateData = cal.dateData
+        invalidate()
+        dateSelectedListener?.accept(cal.clone() as Calendar)
+    }
+
+    var dateSelectedListener: Consumer<Calendar>? = null
+        set(value) {
+            field = value
+            value?.accept(cal.clone() as Calendar)
+        }
+
+    fun setDate(callback: Consumer<Calendar>) {
+        callback.accept(cal)
+        dateData = cal.dateData
     }
 
 //    override fun getBehavior(): CoordinatorLayout.Behavior<*> = VBehavior()
