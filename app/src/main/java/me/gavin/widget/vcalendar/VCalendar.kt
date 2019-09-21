@@ -43,11 +43,12 @@ class VCalendar(context: Context, attrs: AttributeSet?)
     private val rect = Rect()
     private var itemHeightF = 0f
     private var maxHeight = 0
+    private val maxFoldHeight get() = maxHeight - minHeight
 
     private var foldHeight = 0f
 
     val preHeight get() = maxHeight - foldHeight
-    val minHeight get() = itemHeightF
+    val minHeight get() = rect.top + itemHeightF
 
     private var scrollState = SCROLL_NONE
     private val scrollSlop by lazy { ViewConfiguration.get(context).scaledTouchSlop }
@@ -60,7 +61,7 @@ class VCalendar(context: Context, attrs: AttributeSet?)
             }
     private var dateData: DateData? = null
 
-    private val isWeekMode get() = height - itemHeightF < 2
+    private val isWeekMode get() = height - minHeight < 2
 
     init {
         context.obtainStyledAttributes(attrs, R.styleable.VCalendar).apply {
@@ -77,19 +78,15 @@ class VCalendar(context: Context, attrs: AttributeSet?)
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY) {
-            maxHeight = MeasureSpec.getSize(heightMeasureSpec)
-            setMeasuredDimension(width, (maxHeight - foldHeight).roundToInt())
-            itemHeightF = measuredHeight.toFloat() / (dateData?.months?.get(1)?.weeks?.size ?: 5)
-        } else {
-            itemHeightF = if (itemHeight > 0) itemHeight.toFloat() else width / 7f
-            maxHeight = (itemHeightF * (dateData?.months?.get(1)?.weeks?.size ?: 5)).roundToInt()
-            setMeasuredDimension(width, preHeight.roundToInt())
-        }
-        rect.set(0, 0, measuredWidth, measuredHeight)
+        itemHeightF = if (itemHeight > 0) itemHeight.toFloat() else width / 7f
+        maxHeight = rect.top + (itemHeightF * (dateData?.months?.get(1)?.weeks?.size ?: 5)).toInt()
+        setMeasuredDimension(width, preHeight.roundToInt())
+        rect.set(0, 120, measuredWidth, measuredHeight)
     }
 
     override fun onDraw(canvas: Canvas) {
+        drawWeekday(canvas)
+
         dateData?.let {
             if (isWeekMode) {
                 val y0 = rect.top + itemHeightF * 0.5f - diffY
@@ -105,9 +102,23 @@ class VCalendar(context: Context, attrs: AttributeSet?)
         }
     }
 
+    private fun drawWeekday(canvas: Canvas) {
+        val y = rect.top * 0.5f - diffY
+        arrayOf("日", "一", "二", "三", "四", "五", "六").forEachIndexed { h, s ->
+            val x = rect.left + rect.width() / 7f * (h + 0.5f)
+            canvas.drawText(s, x, y, paint)
+        }
+    }
+
     private fun drawMonth(canvas: Canvas, month: Month, dayOfM: Int, offset: Int) {
         val dayOfM2 = dayOfM.coerceAtMost(month.weeks.last().days.map { it.d }.max() ?: 1)
         val line = month.lineOfDay(dayOfM2)
+
+        if (line > 0) {
+            canvas.save()
+            canvas.clipRect(offset, rect.top, offset + width, height)
+        }
+
         month.weeks.forEach {
             val y0 = rect.top + itemHeightF * 0.5f - diffY
             val y1 = y0 + itemHeightF * it.line - foldHeight.coerceAtLeast(0f)
@@ -116,10 +127,14 @@ class VCalendar(context: Context, attrs: AttributeSet?)
             if (it.line == line + 1) {
                 // 比选中日期更大的周不能绘制在第一行
                 canvas.save()
-                canvas.clipRect(offset, itemHeightF.roundToInt(), offset + width, height)
+                canvas.clipRect(offset, rect.top + itemHeightF.roundToInt(), offset + width, height)
             }
 
             drawWeek(canvas, it, offset, y2)
+
+            if (it.line == line - 1) {
+                canvas.restore()
+            }
         }
 
         if (month.weeks.last().line > line) {
@@ -180,7 +195,7 @@ class VCalendar(context: Context, attrs: AttributeSet?)
                     lastX = event.x
                 } else if (scrollState == SCROLL_VERT) {
                     velocityTracker.addMovement(event)
-                    foldHeight = (foldHeight + lastY - event.y).coerceIn(minOf(foldHeight, 0f), maxHeight - itemHeightF)
+                    foldHeight = (foldHeight + lastY - event.y).coerceIn(minOf(foldHeight, 0f), maxFoldHeight)
                     requestLayout()
                     lastY = event.y
                 }
@@ -218,9 +233,9 @@ class VCalendar(context: Context, attrs: AttributeSet?)
     fun snapY(yv: Float) {
         if (isWeekMode || foldHeight == 0f) return
         if (yv.absoluteValue < flingSlop) {
-            smoothScrollYBy(if (foldHeight < (maxHeight - itemHeightF) / 2) 0f else maxHeight - itemHeightF)
+            smoothScrollYBy(if (foldHeight < maxFoldHeight / 2) 0f else maxFoldHeight)
         } else {
-            smoothScrollYBy(if (yv > 0) 0f else maxHeight - itemHeightF)
+            smoothScrollYBy(if (yv > 0) 0f else maxFoldHeight)
         }
     }
 
@@ -281,20 +296,20 @@ class VCalendar(context: Context, attrs: AttributeSet?)
     }
 
     private fun selectDateByPoint(x: Float, y: Float) {
+        if (y < rect.top) return
+
         val hi = (x / width * 7f).toInt()
-        if (isWeekMode) {
-            dateData?.weeks?.get(1)?.days?.get(hi)?.let {
-                cal[Calendar.YEAR] = it.y
-                cal[Calendar.MONTH] = it.m
-                cal[Calendar.DAY_OF_MONTH] = it.d
+        dateData?.let {
+            if (isWeekMode) {
+                it.weeks[1]
+            } else {
+                val vi = ((y - rect.top) / itemHeightF).toInt()
+                it.months[1].weeks[vi]
             }
-        } else {
-            val vi = (y / itemHeightF).toInt()
-            dateData?.months?.get(1)?.weeks?.get(vi)?.days?.get(hi)?.let {
-                cal[Calendar.YEAR] = it.y
-                cal[Calendar.MONTH] = it.m
-                cal[Calendar.DAY_OF_MONTH] = it.d
-            }
+        }?.days?.get(hi)?.let {
+            cal[Calendar.YEAR] = it.y
+            cal[Calendar.MONTH] = it.m
+            cal[Calendar.DAY_OF_MONTH] = it.d
         }
         dateData = cal.dateData
         invalidate()
@@ -315,7 +330,7 @@ class VCalendar(context: Context, attrs: AttributeSet?)
     override fun getBehavior(): CoordinatorLayout.Behavior<*> = VBehavior()
 
     fun consume(dy: Int): Int {
-        val last = (foldHeight + dy).coerceIn(minOf(foldHeight, 0f), maxHeight - itemHeightF)
+        val last = (foldHeight + dy).coerceIn(minOf(foldHeight, 0f), maxFoldHeight)
         val c = last - foldHeight
         foldHeight = last
         requestLayout()

@@ -4,11 +4,18 @@
     <declare-styleable name="VCalendar">
         <!-- 指标组 weight 高度 -->
         <attr name="cal_itemHeight" format="dimension" />
+        <attr name="cal_weekdayHeight" format="dimension" />
         <attr name="cal_textSizeWeekday" format="dimension" />
         <attr name="cal_textColorWeekday" format="color" />
         <attr name="cal_textColorHint" format="color" />
         <attr name="android:textColor" />
         <attr name="android:textSize" />
+        <attr name="cal_selMode" format="enum">
+            <enum name="ring2" value="0">ring</enum>
+            <enum name="over" value="1">over</enum>
+        </attr>
+        <attr name="cal_selStorkWidth" format="dimension" />
+        <attr name="cal_selColor" format="color" />
     </declare-styleable>
 
 </resources>

@@ -9,7 +9,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/holo_orange_light"
-        android:elevation="4dp" />
+        android:elevation="4dp"
+        android:textColor="#333333"
+        android:textSize="16sp"
+        app:cal_textColorHint="#C2C2C2"
+        app:cal_textColorWeekday="#767676"
+        app:cal_textSizeWeekday="12sp" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
