@@ -15,6 +15,7 @@ import android.view.animation.DecelerateInterpolator
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.animation.addListener
 import androidx.core.util.Consumer
+import androidx.core.view.ViewCompat
 import me.gavin.R
 import java.util.*
 import kotlin.math.abs
@@ -22,7 +23,8 @@ import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 @SuppressLint("Recycle")
-class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*, CoordinatorLayout.AttachedBehavior*/ {
+class VCalendar(context: Context, attrs: AttributeSet?)
+    : View(context, attrs), CoordinatorLayout.AttachedBehavior {
 
     private val itemHeight: Int
     private val textSizeWeekday: Int
@@ -43,6 +45,8 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
     private var maxHeight = 0
 
     private var foldHeight = 0f
+
+    val preHeight get() = maxHeight - foldHeight
 
     private var scrollState = SCROLL_NONE
     private val scrollSlop by lazy { ViewConfiguration.get(context).scaledTouchSlop }
@@ -79,7 +83,7 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
         } else {
             itemHeightF = if (itemHeight > 0) itemHeight.toFloat() else width / 7f
             maxHeight = (itemHeightF * (dateData?.months?.get(1)?.weeks?.size ?: 5)).roundToInt()
-            setMeasuredDimension(width, (maxHeight - foldHeight).roundToInt())
+            setMeasuredDimension(width, preHeight.roundToInt())
         }
         rect.set(0, 0, measuredWidth, measuredHeight)
     }
@@ -187,20 +191,10 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
                 }
 
                 if (scrollState == SCROLL_HORI) {
-                    val xv = velocityTracker.xVelocity
-                    if (xv.absoluteValue < flingSlop) {
-                        smoothScrollXBy(if (abs(scrollX) < width / 2) 0 else if (scrollX > 0) width else -width)
-                    } else {
-                        smoothScrollXBy(if (scrollX * xv > 0) 0 else if (scrollX > 0) width else -width)
-                    }
+                    snapX(velocityTracker.xVelocity)
                     velocityTracker.recycle()
                 } else if (scrollState == SCROLL_VERT) {
-                    val yv = velocityTracker.yVelocity
-                    if (yv.absoluteValue < flingSlop) {
-                        smoothScrollYBy(if (foldHeight < (maxHeight - itemHeightF) / 2) 0f else maxHeight - itemHeightF)
-                    } else {
-                        smoothScrollYBy(if (yv > 0) 0f else maxHeight - itemHeightF)
-                    }
+                    snapY(velocityTracker.yVelocity)
                     velocityTracker.recycle()
                 } else {
                     selectDateByPoint(event.x, event.y)
@@ -210,6 +204,22 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
             }
         }
         return true
+    }
+
+    private fun snapX(xv: Float) {
+        if (xv.absoluteValue < flingSlop) {
+            smoothScrollXBy(if (abs(scrollX) < width / 2) 0 else if (scrollX > 0) width else -width)
+        } else {
+            smoothScrollXBy(if (scrollX * xv > 0) 0 else if (scrollX > 0) width else -width)
+        }
+    }
+
+    fun snapY(yv: Float) {
+        if (yv.absoluteValue < flingSlop) {
+            smoothScrollYBy(if (foldHeight < (maxHeight - itemHeightF) / 2) 0f else maxHeight - itemHeightF)
+        } else {
+            smoothScrollYBy(if (yv > 0) 0f else maxHeight - itemHeightF)
+        }
     }
 
     private val xAnimator by lazy {
@@ -300,7 +310,15 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
         dateData = cal.dateData
     }
 
-//    override fun getBehavior(): CoordinatorLayout.Behavior<*> = VBehavior()
+    override fun getBehavior(): CoordinatorLayout.Behavior<*> = VBehavior()
+
+    fun consume(dy: Int): Int {
+        val last = (foldHeight + dy).coerceIn(minOf(foldHeight, 0f), maxHeight - itemHeightF)
+        val c = last - foldHeight
+        foldHeight = last
+        requestLayout()
+        return c.toInt()
+    }
 
     companion object {
         const val SCROLL_NONE = 'N'
@@ -310,4 +328,64 @@ class VCalendar(context: Context, attrs: AttributeSet?) : View(context, attrs)/*
 
 }
 
-class VBehavior : CoordinatorLayout.Behavior<VCalendar>()
+class VBehavior : CoordinatorLayout.Behavior<VCalendar>() {
+
+    override fun onStartNestedScroll(coordinatorLayout: CoordinatorLayout, child: VCalendar, directTargetChild: View, target: View, axes: Int, type: Int): Boolean {
+        "onStartNestedScroll - ".print()
+        return axes and View.SCROLL_AXIS_VERTICAL != 0
+    }
+
+    override fun onNestedScrollAccepted(coordinatorLayout: CoordinatorLayout, child: VCalendar, directTargetChild: View, target: View, axes: Int, type: Int) {
+        "onNestedScrollAccepted - ".print()
+    }
+
+    override fun onNestedPreScroll(coordinatorLayout: CoordinatorLayout, child: VCalendar, target: View, dx: Int, dy: Int, consumed: IntArray, type: Int) {
+//        "onNestedPreScroll - $dy".print()
+        if (dy > 0) {
+            consumed[1] = child.consume(dy)
+        }
+    }
+
+    override fun onNestedScroll(coordinatorLayout: CoordinatorLayout, child: VCalendar, target: View, dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int, dyUnconsumed: Int, type: Int) {
+//        "onNestedScroll - ".print()
+        if (dyUnconsumed < 0) {
+            child.consume(dyUnconsumed)
+        }
+    }
+
+    override fun onStopNestedScroll(coordinatorLayout: CoordinatorLayout, child: VCalendar, target: View, type: Int) {
+        "onStopNestedScroll - ".print()
+        if (type != ViewCompat.TYPE_TOUCH) {
+            child.snapY(0f)
+        }
+    }
+
+    override fun onNestedPreFling(coordinatorLayout: CoordinatorLayout, child: VCalendar, target: View, velocityX: Float, velocityY: Float): Boolean {
+        "onNestedPreFling - ".print()
+        return super.onNestedPreFling(coordinatorLayout, child, target, velocityX, velocityY)
+    }
+
+    override fun onNestedFling(coordinatorLayout: CoordinatorLayout, child: VCalendar, target: View, velocityX: Float, velocityY: Float, consumed: Boolean): Boolean {
+        "onNestedFling - ".print()
+        return super.onNestedFling(coordinatorLayout, child, target, velocityX, velocityY, consumed)
+    }
+
+}
+
+class ScrollingViewBehavior(context: Context, attrs: AttributeSet) : CoordinatorLayout.Behavior<View>(context, attrs) {
+
+    override fun layoutDependsOn(parent: CoordinatorLayout, child: View, dependency: View): Boolean {
+        return dependency is VCalendar
+    }
+
+    override fun onDependentViewChanged(parent: CoordinatorLayout, child: View, dependency: View): Boolean {
+//        child.translationY = dependency.height.toFloat()
+        child.translationY = minOf(dependency.height.toFloat(), (dependency as VCalendar).preHeight)
+        return true
+    }
+
+//    fun onDependentViewChanged(parent: CoordinatorLayout, child: View, dependency: View): Boolean {
+//        child.translationY = (dependency as ICalendar).getCurrHeight()
+//        return true
+//    }
+}

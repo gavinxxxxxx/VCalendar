@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <me.gavin.widget.vcalendar.VCalendar
+        android:id="@+id/cal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/holo_orange_light"
+        android:elevation="4dp" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="me.gavin.widget.vcalendar.ScrollingViewBehavior">
+
+        <LinearLayout
+            android:id="@+id/holder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="1"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="2"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="3"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="4"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="5"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="6"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="7"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="8"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="9"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="10"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="11"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="12"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="13"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="14"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="15"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="16"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="17"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="18"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="19"
+                android:textColor="#FFF" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_gradient"
+                android:gravity="center"
+                android:text="20"
+                android:textColor="#FFF" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
